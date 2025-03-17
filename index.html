@@ -365,7 +365,7 @@
                     const baseTime = Math.max(1.5, 5.0 - (score * 0.1));
                     timer = baseTime;
                     timerElement.textContent = timer.toFixed(1);
-                    timerBar.style.transform = scaleX(1);
+                    timerBar.style.transform = `scaleX(${timer / 5})`;
                     
                     generateNumbers();
                 } else {
@@ -395,7 +395,7 @@
                     
                     // Update timer bar
                     const timerPercentage = timer / 5;
-                    timerBar.style.transform = scaleX(${timerPercentage});
+                    timerBar.style.transform = `scaleX(${timerPercentage})`;
                     
                     if (timer <= 0) {
                         endGame();
@@ -432,10 +432,10 @@
                 const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6'];
                 const color = colors[Math.floor(Math.random() * colors.length)];
                 
-                distraction.style.width = ${size}px;
-                distraction.style.height = ${size}px;
-                distraction.style.left = ${left}%;
-                distraction.style.top = ${top}%;
+                distraction.style.width = `${size}px`;
+                distraction.style.height = `${size}px`;
+                distraction.style.left = `${left}%`;
+                distraction.style.top = `${top}%`;
                 distraction.style.backgroundColor = color;
                 
                 // Add to game container
