@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2-Bit Battle</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --correct-color: #2ecc71;
+            --incorrect-color: #e74c3c;
+            --background-color: #ecf0f1;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            width: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .score, .high-score, .timer {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .binary-display {
+            display: flex;
+            justify-content: space-around;
+            margin: 40px 0;
+        }
+
+        .binary-number {
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 48px;
+            padding: 20px 40px;
+            border-radius: 10px;
+            letter-spacing: 10px;
+            position: relative;
+        }
+
+        .binary-number::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-color);
+            font-size: 24px;
+        }
+
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 60px;
+        }
+
+        .btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 15px 30px;
+            font-size: 28px;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.3s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .start-screen, .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .start-screen h2, .game-over-screen h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .start-btn, .restart-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .timer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 5px;
+            width: 100%;
+            background-color: var(--accent-color);
+            transform-origin: left;
+        }
+
+        .distraction {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.7;
+            z-index: -1;
+            animation: float 3s infinite alternate ease-in-out;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(10px, 10px);
+            }
+        }
+
+        .flash {
+            animation: flash-animation 0.5s;
+        }
+
+        @keyframes flash-animation {
+            0% { background-color: var(--primary-color); }
+            50% { background-color: var(--accent-color); }
+            100% { background-color: var(--primary-color); }
+        }
+
+        .correct {
+            background-color: var(--correct-color);
+        }
+
+        .incorrect {
+            background-color: var(--incorrect-color);
+        }
+
+        .instructions {
+            margin-top: 20px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .final-score {
+            font-size: 48px;
+            color: var(--accent-color);
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>2-Bit Battle</h1>
+
+        <div class="score-container">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="timer">Time: <span id="timer">5.0</span>s</div>
+            <div class="high-score">High Score: <span id="high-score">0</span></div>
+        </div>
+
+        <div class="binary-display">
+            <div class="binary-number" id="binary-a" data-label="A">00</div>
+            <div class="binary-number" id="binary-b" data-label="B">00</div>
+        </div>
+
+        <div class="buttons-container">
+            <button class="btn" id="less-than">&lt;</button>
+            <button class="btn" id="equal">=</button>
+            <button class="btn" id="greater-than">&gt;</button>
+        </div>
+
+        <div class="timer-bar" id="timer-bar"></div>
+
+        <div class="start-screen">
+            <h2>2-Bit Battle</h2>
+            <p>Compare two 2-bit binary numbers and select the correct relationship!</p>
+            <button class="start-btn">Start Game</button>
+            <div class="instructions">
+                <p>00 = 0, 01 = 1, 10 = 2, 11 = 3</p>
+                <p>Press &lt; if A is less than B</p>
+                <p>Press = if A equals B</p>
+                <p>Press &gt; if A is greater than B</p>
+            </div>
+        </div>
+
+        <div class="game-over-screen" style="display: none;">
+            <h2>Game Over!</h2>
+            <p>Your final score:</p>
+            <div class="final-score" id="final-score">0</div>
+            <button class="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game elements
+            const startScreen = document.querySelector('.start-screen');
+            const gameOverScreen = document.querySelector('.game-over-screen');
+            const startBtn = document.querySelector('.start-btn');
+            const restartBtn = document.querySelector('.restart-btn');
+            const scoreElement = document.getElementById('score');
+            const highScoreElement = document.getElementById('high-score');
+            const finalScoreElement = document.getElementById('final-score');
+            const timerElement = document.getElementById('timer');
+            const timerBar = document.getElementById('timer-bar');
+            const binaryA = document.getElementById('binary-a');
+            const binaryB = document.getElementById('binary-b');
+            const lessBtn = document.getElementById('less-than');
+            const equalBtn = document.getElementById('equal');
+            const greaterBtn = document.getElementById('greater-than');
+            const gameContainer = document.querySelector('.game-container');
+
+            // Game state
+            let score = 0;
+            let highScore = localStorage.getItem('2BitBattleHighScore') || 0;
+            let timer = 5.0;
+            let gameInterval;
+            let timerInterval;
+            let isGameActive = false;
+            let numberA, numberB;
+            let distractionInterval;
+
+            // Initialize
+            highScoreElement.textContent = highScore;
+
+            // Start game
+            startBtn.addEventListener('click', startGame);
+            restartBtn.addEventListener('click', restartGame);
+
+            // Button event listeners
+            lessBtn.addEventListener('click', () => checkAnswer('less'));
+            equalBtn.addEventListener('click', () => checkAnswer('equal'));
+            greaterBtn.addEventListener('click', () => checkAnswer('greater'));
+
+            function startGame() {
+                score = 0;
+                timer = 5.0;
+                isGameActive = true;
+                scoreElement.textContent = score;
+                timerElement.textContent = timer.toFixed(1);
+                startScreen.style.display = 'none';
+                gameOverScreen.style.display = 'none';
+                clearAllDistractions();
+                
+                generateNumbers();
+                startTimer();
+                
+                // Start adding distractions when score increases
+                distractionInterval = setInterval(() => {
+                    if (score > 5) {
+                        addDistraction();
+                    }
+                }, 2000);
+            }
+
+            function restartGame() {
+                gameOverScreen.style.display = 'none';
+                startGame();
+            }
+
+            function generateNumbers() {
+                // Generate two 2-bit binary numbers (0-3)
+                numberA = Math.floor(Math.random() * 4);
+                numberB = Math.floor(Math.random() * 4);
+                
+                // Convert to binary and ensure it's 2 digits
+                const binaryNumberA = numberA.toString(2).padStart(2, '0');
+                const binaryNumberB = numberB.toString(2).padStart(2, '0');
+                
+                binaryA.textContent = binaryNumberA;
+                binaryB.textContent = binaryNumberB;
+                
+                // Add flash effect for higher scores
+                if (score > 10) {
+                    binaryA.classList.add('flash');
+                    binaryB.classList.add('flash');
+                    
+                    setTimeout(() => {
+                        binaryA.classList.remove('flash');
+                        binaryB.classList.remove('flash');
+                    }, 500);
+                }
+            }
+
+            function checkAnswer(answer) {
+                if (!isGameActive) return;
+                
+                let isCorrect = false;
+                
+                if (answer === 'less' && numberA < numberB) {
+                    isCorrect = true;
+                } else if (answer === 'equal' && numberA === numberB) {
+                    isCorrect = true;
+                } else if (answer === 'greater' && numberA > numberB) {
+                    isCorrect = true;
+                }
+                
+                if (isCorrect) {
+                    // Flash green for correct
+                    if (answer === 'less') {
+                        lessBtn.classList.add('correct');
+                        setTimeout(() => lessBtn.classList.remove('correct'), 300);
+                    } else if (answer === 'equal') {
+                        equalBtn.classList.add('correct');
+                        setTimeout(() => equalBtn.classList.remove('correct'), 300);
+                    } else {
+                        greaterBtn.classList.add('correct');
+                        setTimeout(() => greaterBtn.classList.remove('correct'), 300);
+                    }
+                    
+                    score++;
+                    scoreElement.textContent = score;
+                    
+                    // Reset timer with a bonus, but make it increasingly difficult
+                    const baseTime = Math.max(1.5, 5.0 - (score * 0.1));
+                    timer = baseTime;
+                    timerElement.textContent = timer.toFixed(1);
+                    timerBar.style.transform = scaleX(1);
+                    
+                    generateNumbers();
+                } else {
+                    // Flash red for incorrect
+                    if (answer === 'less') {
+                        lessBtn.classList.add('incorrect');
+                        setTimeout(() => lessBtn.classList.remove('incorrect'), 300);
+                    } else if (answer === 'equal') {
+                        equalBtn.classList.add('incorrect');
+                        setTimeout(() => equalBtn.classList.remove('incorrect'), 300);
+                    } else {
+                        greaterBtn.classList.add('incorrect');
+                        setTimeout(() => greaterBtn.classList.remove('incorrect'), 300);
+                    }
+                    
+                    endGame();
+                }
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval);
+                
+                timerInterval = setInterval(() => {
+                    timer -= 0.1;
+                    timer = parseFloat(timer.toFixed(1)); // Fix for floating point issues
+                    timerElement.textContent = timer.toFixed(1);
+                    
+                    // Update timer bar
+                    const timerPercentage = timer / 5;
+                    timerBar.style.transform = scaleX(${timerPercentage});
+                    
+                    if (timer <= 0) {
+                        endGame();
+                    }
+                }, 100);
+            }
+
+            function endGame() {
+                isGameActive = false;
+                clearInterval(timerInterval);
+                clearInterval(distractionInterval);
+                
+                // Update high score
+                if (score > highScore) {
+                    highScore = score;
+                    highScoreElement.textContent = highScore;
+                    localStorage.setItem('2BitBattleHighScore', highScore);
+                }
+                
+                finalScoreElement.textContent = score;
+                gameOverScreen.style.display = 'flex';
+            }
+
+            function addDistraction() {
+                if (!isGameActive) return;
+                
+                const distraction = document.createElement('div');
+                distraction.classList.add('distraction');
+                
+                // Random size, position, and color
+                const size = Math.random() * 50 + 20;
+                const left = Math.random() * 80 + 10;
+                const top = Math.random() * 80 + 10;
+                const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                distraction.style.width = ${size}px;
+                distraction.style.height = ${size}px;
+                distraction.style.left = ${left}%;
+                distraction.style.top = ${top}%;
+                distraction.style.backgroundColor = color;
+                
+                // Add to game container
+                gameContainer.appendChild(distraction);
+                
+                // Remove after some time
+                setTimeout(() => {
+                    distraction.remove();
+                }, 5000);
+            }
+
+            function clearAllDistractions() {
+                const distractions = document.querySelectorAll('.distraction');
+                distractions.forEach(distraction => distraction.remove());
+            }
+
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                if (!isGameActive) return;
+                
+                if (e.key === ',' || e.key === '<') {
+                    checkAnswer('less');
+                } else if (e.key === '.' || e.key === '=') {
+                    checkAnswer('equal');
+                } else if (e.key === '/' || e.key === '>') {
+                    checkAnswer('greater');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
