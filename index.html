@@ -140,6 +140,7 @@
             margin-bottom: 20px;
             font-weight: 700;
             font-size: 28px;
+            height: 100%;
         }
 
         .start-btn, .restart-btn, .login-btn, .view-leaderboard-btn, .back-btn {
@@ -159,6 +160,25 @@
         .start-btn:hover, .restart-btn:hover, .login-btn:hover, .view-leaderboard-btn:hover, .back-btn:hover {
             transform: scale(1.05);
             background-color: #c0392b;
+        }
+
+        .switch-account-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 10px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .switch-account-btn:hover {
+            transform: scale(1.05);
+            background-color: #3498db;
         }
 
         .timer-bar {
@@ -307,6 +327,44 @@
             background-color: #e2e8f0;
         }
 
+        /* Add styles for top 3 positions */
+        .leaderboard-table tr:nth-child(1) {
+            background-color: #fff3cd;
+            font-weight: bold;
+        }
+
+        .leaderboard-table tr:nth-child(2) {
+            background-color: #e2e3e5;
+            font-weight: bold;
+        }
+
+        .leaderboard-table tr:nth-child(3) {
+            background-color: #f8d7da;
+            font-weight: bold;
+        }
+
+        .rank-medal {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .rank-1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFD700"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>');
+        }
+
+        .rank-2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23C0C0C0"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>');
+        }
+
+        .rank-3 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23CD7F32"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>');
+        }
+
         .user-info {
             font-size: 18px;
             margin-bottom: 15px;
@@ -351,7 +409,7 @@
                     <div class="error-message" id="name-error"></div>
                 </div>
                 <div class="form-group">
-                    <label for="email">Email (@chitkara.edu.in)</label>
+                    <label for="email">Email</label>
                     <input type="email" id="email" placeholder="Enter your email" required>
                     <div class="error-message" id="email-error"></div>
                 </div>
@@ -369,6 +427,7 @@
             <div class="user-info" id="user-display"></div>
             <p>Compare two 2-bit binary numbers and select the correct relationship!</p>
             <button class="start-btn">Start Game</button>
+            <button class="switch-account-btn">Switch Account</button>
             <div class="instructions">
                 <p>00 = 0, 01 = 1, 10 = 2, 11 = 3</p>
                 <p>Press &lt; if A is less than B</p>
@@ -383,6 +442,7 @@
             <div class="final-score" id="final-score">0</div>
             <button class="restart-btn">Play Again</button>
             <button class="view-leaderboard-btn">View Leaderboard</button>
+            <button class="switch-account-btn">Switch Account</button>
         </div>
 
         <div class="leaderboard-screen" style="display: none;">
@@ -416,6 +476,7 @@
             const restartBtn = document.querySelector('.restart-btn');
             const viewLeaderboardBtn = document.querySelector('.view-leaderboard-btn');
             const backBtn = document.querySelector('.back-btn');
+            const switchAccountBtns = document.querySelectorAll('.switch-account-btn');
             const scoreElement = document.getElementById('score');
             const highScoreElement = document.getElementById('high-score');
             const finalScoreElement = document.getElementById('final-score');
@@ -448,10 +509,21 @@
             let numberA, numberB;
             let distractionInterval;
             let currentUser = {};
-            let leaderboard = JSON.parse(localStorage.getItem('2BitBattleLeaderboard')) || [];
+            let leaderboard = [];
 
             // Initialize
             highScoreElement.textContent = highScore;
+            
+            // Load leaderboard data from localStorage
+            function loadLeaderboard() {
+                const savedLeaderboard = localStorage.getItem('2BitBattleLeaderboard');
+                if (savedLeaderboard) {
+                    leaderboard = JSON.parse(savedLeaderboard);
+                }
+            }
+
+            // Call loadLeaderboard when page loads
+            loadLeaderboard();
 
             // Login validation and submit
             loginBtn.addEventListener('click', function() {
@@ -470,8 +542,8 @@
                 if (!email) {
                     emailError.textContent = 'Email is required';
                     isValid = false;
-                } else if (!email.endsWith('@chitkara.edu.in')) {
-                    emailError.textContent = 'Email must be in @chitkara.edu.in format';
+                } else if (!email.includes('@')) {
+                    emailError.textContent = 'Please enter a valid email address';
                     isValid = false;
                 } else {
                     emailError.textContent = '';
@@ -506,6 +578,11 @@
             restartBtn.addEventListener('click', restartGame);
             viewLeaderboardBtn.addEventListener('click', showLeaderboard);
             backBtn.addEventListener('click', hideLeaderboard);
+
+            // Add event listeners for switch account buttons
+            switchAccountBtns.forEach(btn => {
+                btn.addEventListener('click', switchAccount);
+            });
 
             // Button event listeners
             lessBtn.addEventListener('click', () => checkAnswer('less'));
@@ -680,17 +757,36 @@
             }
 
             function showLeaderboard() {
+                // Load the latest leaderboard data before displaying
+                loadLeaderboard();
+                
                 gameOverScreen.style.display = 'none';
                 leaderboardScreen.style.display = 'flex';
                 
                 // Clear previous entries
                 leaderboardBody.innerHTML = '';
                 
+                // Sort leaderboard by score (highest first) and take top 10
+                const sortedLeaderboard = [...leaderboard]
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 10);
+                
                 // Add leaderboard entries
-                leaderboard.forEach((entry, index) => {
+                sortedLeaderboard.forEach((entry, index) => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
+                    const rankCell = document.createElement('td');
+                    
+                    // Add medal icon for top 3
+                    if (index < 3) {
+                        const medal = document.createElement('span');
+                        medal.classList.add('rank-medal', `rank-${index + 1}`);
+                        rankCell.appendChild(medal);
+                    }
+                    
+                    rankCell.appendChild(document.createTextNode(index + 1));
+                    
+                    row.appendChild(rankCell);
+                    row.innerHTML += `
                         <td>${entry.name}</td>
                         <td>${entry.email}</td>
                         <td>${entry.score}</td>
@@ -749,6 +845,27 @@
                     checkAnswer('greater');
                 }
             });
+
+            function switchAccount() {
+                // Clear current user
+                currentUser = {};
+                
+                // Clear form inputs
+                nameInput.value = '';
+                emailInput.value = '';
+                rollInput.value = '';
+                
+                // Clear error messages
+                nameError.textContent = '';
+                emailError.textContent = '';
+                rollError.textContent = '';
+                
+                // Hide current screen and show login screen
+                startScreen.style.display = 'none';
+                gameOverScreen.style.display = 'none';
+                leaderboardScreen.style.display = 'none';
+                loginScreen.style.display = 'flex';
+            }
         });
     </script>
 </body>
